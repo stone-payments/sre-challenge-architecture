@@ -1,0 +1,31 @@
+---
+- hosts: all
+  become: false
+
+  tasks:
+    - name: Make Clean
+      command: sh /opt/projeto/run.sh clean
+    
+    - name: Remove Docker Module for Python
+      pip:
+        name:
+          - docker
+          - docker-py
+        state: absent
+    
+    - name: Update apt and remove docker-ce
+      apt:
+        update_cache: yes
+        name:
+          - docker-ce
+          - docker-ce-cli
+        state: absent
+
+    - name: Del Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/debian buster stable
+        state: absent
+
+    - name: Remove required system packages
+      apt: name={{ item }} state=absent update_cache=yes
+      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'gnupg2', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools', 'python-setuptools','python-pip']

@@ -1,0 +1,36 @@
+---
+- hosts: all
+  become: false
+
+  tasks:
+    - name: Copy files
+      copy:
+        src: ./projeto
+        dest: /opt
+        mode: '0644'
+
+    - name: Install required system packages
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'gnupg2', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools', 'python-setuptools','python-pip']
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/debian buster stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt: update_cache=yes name=docker-ce state=latest
+
+    - name: Install Docker Module for Python
+      pip:
+        name:
+            - docker
+            - docker-py
+
+    - name: Make Run
+      command: sh /opt/projeto/run.sh run
