@@ -18,14 +18,6 @@ create-postgres:
 	docker stop postgres
 	docker start postgres
 
-#PSQL := $(shell docker ps|grep postgres|wc -l)
-#create-postgres-db:
-#ifeq ($(PSQL), 1)
-#else
-#	break
-#endif
-
-#create-containers: build-images create-postgres create-postgres-db
 create-containers: build-images create-postgres
 	docker run --hostname redis --name redis --network apinet -d redis
 	docker run --hostname stoneapi1 --name stoneapi1 --network apinet -d stoneapi
