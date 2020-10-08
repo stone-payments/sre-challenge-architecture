@@ -7,9 +7,13 @@ import redis
 from datetime import timedelta
 
 def status(code):
+    """Retorna mensagem de status"""
     if code == 200:
         responseObj = {'status' : 'success'}
         response = web.Response(text=json.dumps(responseObj), status=200)
+    if code == 406:
+        responseObj = {'status' : 'Erro, Algum problema com a syntax'}
+        response = web.Response(text=json.dumps(responseObj), status=406)
     if code == 500:
         responseObj = {'status' : 'Error'}
         response = web.Response(text=json.dumps(responseObj), status=500)
@@ -34,18 +38,14 @@ def setUser(obj):
             else:
                 return "err"
         else:
-            print(user)
-    print(user)
+            status(406)
     return user
-
-def getUser(user):
-    print(user)
-    return "ok"
 
 routes = web.RouteTableDef()
 
 @routes.get('/')
 async def get_handler(request):
+    """Retorna somento ok"""
     return status(200)
 
 @routes.post('/post')
@@ -74,7 +74,7 @@ async def post_handler(request):
 @routes.get('/get')
 @routes.get('/get/{cpf}')
 async def getUser_handler(request):
-    """Handle incoming requests."""
+    """Recebe o request, se nao enviado nada, retorna tudo ou se tiver um cpf o cadastro do mesmo"""
     pool = request.app['pool']
     async with pool.acquire() as connection:
         userInfo = {}
@@ -88,27 +88,19 @@ async def getUser_handler(request):
                 else:
                     results = await connection.fetch('select id,name,lastname,cpf,bday from users\
                         where cpf = \'{}\''.format(request.match_info['cpf']))
-                    print(results)
-                    #print(type(results))
-                    print("=====")
                     userInfo = dict(results[0])
-                    print(r.get(str(userInfo['cpf'])))
                     r.setex(
                         str(userInfo['cpf']),
                         30,
                         value=str(userInfo)
                     )
-                    print(r.get(str(userInfo['cpf'])))
-                    print("=====")
                     userInfoCache = r.get(str(userInfo['cpf'])).decode("utf-8")
-                    #print(type(userInfoCache))
                     userInfoCache = eval(userInfoCache)
             else:
                 # Run the query passing the request argument.
                 results = await connection.fetch('select id,name,lastname,cpf,bday from users')
                 for result in results:
                     userInfo[result['id']] = dict(result)
-            #print("Solicitou")
             status = { 'Result' : userInfo }
             response = web.Response(text=json.dumps(status), status=200)
             return response
